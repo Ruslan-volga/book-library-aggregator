@@ -21,11 +21,10 @@ export const login = createAsyncThunk(
   async (credentials: LoginCredentials, { rejectWithValue }) => {
     try {
       const response = await authApi.login(credentials);
-      const data: AuthResponse = response.data; // Извлекаем данные из axios response
-      localStorage.setItem('token', data.access_token);
-      return data;
+      localStorage.setItem('token', response.access_token);
+      return response;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Login failed');
+      return rejectWithValue(error.message || 'Login failed');
     }
   }
 );
@@ -34,10 +33,22 @@ export const register = createAsyncThunk(
   'auth/register',
   async (userData: RegisterData, { rejectWithValue }) => {
     try {
-      const response = await authApi.register(userData);
-      return response.data; // Извлекаем данные
+      const user = await authApi.register(userData);
+      return user;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Registration failed');
+      return rejectWithValue(error.message || 'Registration failed');
+    }
+  }
+);
+
+export const getProfile = createAsyncThunk(
+  'auth/profile',
+  async (_, { rejectWithValue }) => {
+    try {
+      const user = await authApi.getProfile();
+      return user;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to get profile');
     }
   }
 );
@@ -83,6 +94,19 @@ const authSlice = createSlice({
       .addCase(register.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
+      })
+      // Get Profile
+      .addCase(getProfile.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getProfile.fulfilled, (state, action: PayloadAction<User>) => {
+        state.isLoading = false;
+        state.user = action.payload;
+      })
+      .addCase(getProfile.rejected, (state) => {
+        state.isLoading = false;
+        // Не очищаем пользователя при ошибке получения профиля
       });
   },
 });

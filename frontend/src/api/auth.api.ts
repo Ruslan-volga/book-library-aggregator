@@ -1,12 +1,16 @@
 import api from './client';
+import { LoginCredentials, RegisterData, AuthResponse, User } from '../types/auth.types';
 
 export const authApi = {
-  login: (credentials: { email: string; password: string }) =>
+  login: (credentials: LoginCredentials): Promise<AuthResponse> =>
     api.post('/auth/login', credentials),
   
-  register: (userData: any) =>
+  register: (userData: RegisterData): Promise<User> =>
     api.post('/auth/register', userData),
   
-  logout: () =>
+  logout: (): Promise<void> =>
     api.post('/auth/logout'),
+  
+  getProfile: (): Promise<User> =>
+    api.get('/users/profile'),
 };
