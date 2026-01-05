@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Библиотека с аутентификацией</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .auth-box { max-width: 400px; margin: 100px auto; background: white; border-radius: 15px; padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .main-content { display: none; }
+        .stat-card { background: white; border-radius: 10px; padding: 20px; margin: 10px 0; }
+        .book-card { border-left: 4px solid #667eea; margin: 10px 0; }
+        .nav-user { color: white; }
+    </style>
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-book"></i> Библиотечная система
+            </a>
+            <div class="nav-user" id="userInfo">
+                <span id="userEmail"></span>
+                <button class="btn btn-outline-light btn-sm ms-3" onclick="logout()" id="logoutBtn">
+                    <i class="bi bi-box-arrow-right"></i> Выйти
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Форма аутентификации -->
+    <div id="authSection" class="container">
+        <div class="auth-box">
+            <h2 class="text-center mb-4">Вход в систему</h2>
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" value="admin@library.com">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Пароль</label>
+                <input type="password" class="form-control" id="password" value="admin123">
+            </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="remember">
+                <label class="form-check-label" for="remember">Запомнить меня</label>
+            </div>
+            <button class="btn btn-primary w-100 mb-3" onclick="login()">
+                <i class="bi bi-box-arrow-in-right"></i> Войти
+            </button>
+            <button class="btn btn-outline-primary w-100" onclick="showRegister()">
+                <i class="bi bi-person-plus"></i> Регистрация
+            </button>
+            <div class="alert alert-info mt-3" role="alert">
+                <small>
+                    <strong>Тестовые данные:</strong><br>
+                    Email: admin@library.com<br>
+                    Пароль: admin123
+                </small>
+            </div>
+            <div id="authError" class="alert alert-danger mt-3 d-none"></div>
+        </div>
+    </div>
+
+    <!-- Форма регистрации -->
+    <div id="registerSection" class="container d-none">
+        <div class="auth-box">
+            <h2 class="text-center mb-4">Регистрация</h2>
+            <div class="row mb-3">
+                <div class="col">
+                    <label class="form-label">Имя</label>
+                    <input type="text" class="form-control" id="firstName">
+                </div>
+                <div class="col">
+                    <label class="form-label">Фамилия</label>
+                    <input type="text" class="form-control" id="lastName">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" id="regEmail">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Пароль</label>
+                <input type="password" class="form-control" id="regPassword">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Подтверждение пароля</label>
+                <input type="password" class="form-control" id="regPasswordConfirm">
+            </div>
+            <button class="btn btn-success w-100 mb-3" onclick="register()">
+                <i class="bi bi-person-check"></i> Зарегистрироваться
+            </button>
+            <button class="btn btn-outline-secondary w-100" onclick="showLogin()">
+                <i class="bi bi-arrow-left"></i> Назад к входу
+            </button>
+            <div id="regError" class="alert alert-danger mt-3 d-none"></div>
+        </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div id="mainContent" class="container main-content">
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="card-title">Добро пожаловать, <span id="welcomeName"></span>!</h3>
+                        <p class="card-text">Вы успешно вошли в систему библиотек.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4" id="statsRow">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h4><i class="bi bi-building"></i> <span id="libraryCount">0</span></h4>
+                    <p>Библиотек</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h4><i class="bi bi-book"></i> <span id="bookCount">0</span></h4>
+                    <p>Всего книг</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h4><i class="bi bi-check-circle"></i> <span id="availableCount">0</span></h4>
+                    <p>Доступно</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h4><i class="bi bi-person"></i> <span id="userRole">Гость</span></h4>
+                    <p>Ваша роль</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-building"></i> Библиотеки</h5>
+                    </div>
+                    <div class="card-body" id="librariesList">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Загрузка...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-book"></i> Книги</h5>
+                    </div>
+                    <div class="card-body" id="booksList">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Загрузка...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4" id="adminPanel" style="display: none;">
+            <div class="col-12">
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-shield-check"></i> Панель администратора</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Вы вошли как администратор. Доступны дополнительные функции:</p>
+                        <div class="d-grid gap-2 d-md-block">
+                            <button class="btn btn-success" onclick="addBook()">
+                                <i class="bi bi-plus-circle"></i> Добавить книгу
+                            </button>
+                            <button class="btn btn-info" onclick="manageLibraries()">
+                                <i class="bi bi-gear"></i> Управление библиотеками
+                            </button>
+                            <button class="btn btn-warning" onclick="viewUsers()">
+                                <i class="bi bi-people"></i> Просмотр пользователей
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        let currentToken = localStorage.getItem('token');
+        let currentUser = null;
+
+        // Проверяем аутентификацию при загрузке
+        window.onload = function() {
+            if (currentToken) {
+                verifyToken();
+            } else {
+                showLogin();
+            }
+        };
+
+        // Проверка токена
+        async function verifyToken() {
+            try {
+                const response = await fetch(`${API_BASE}/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    currentUser = await response.json();
+                    showMainContent();
+                    loadData();
+                } else {
+                    logout();
+                }
+            } catch (error) {
+                logout();
+            }
+        }
+
+        // Вход
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentToken = data.token;
+                    currentUser = data.user;
+                    
+                    localStorage.setItem('token', currentToken);
+                    showMainContent();
+                    loadData();
+                    
+                    document.getElementById('authError').classList.add('d-none');
+                } else {
+                    const error = await response.json();
+                    showAuthError(error.message || 'Ошибка входа');
+                }
+            } catch (error) {
+                showAuthError('Ошибка соединения с сервером');
+            }
+        }
+
+        // Регистрация
+        async function register() {
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const passwordConfirm = document.getElementById('regPasswordConfirm').value;
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+
+            if (password !== passwordConfirm) {
+                showRegError('Пароли не совпадают');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, firstName, lastName })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showAuthSuccess('Регистрация успешна! Теперь вы можете войти.');
+                    showLogin();
+                } else {
+                    const error = await response.json();
+                    showRegError(error.message || 'Ошибка регистрации');
+                }
+            } catch (error) {
+                showRegError('Ошибка соединения с сервером');
+            }
+        }
+
+        // Выход
+        function logout() {
+            localStorage.removeItem('token');
+            currentToken = null;
+            currentUser = null;
+            showLogin();
+        }
+
+        // Загрузка данных
+        async function loadData() {
+            try {
+                // Загружаем статистику
+                const statsRes = await fetch(`${API_BASE}/libraries/stats/counts`);
+                const stats = await statsRes.json();
+                
+                // Загружаем библиотеки
+                const libsRes = await fetch(`${API_BASE}/libraries`);
+                const libraries = await libsRes.json();
+                
+                // Загружаем книги
+                const booksRes = await fetch(`${API_BASE}/libraries/books/new`);
+                const books = await booksRes.json();
+
+                updateUI(stats, libraries, books);
+            } catch (error) {
+                console.error('Ошибка загрузки данных:', error);
+            }
+        }
+
+        // Обновление UI
+        function updateUI(stats, libraries, books) {
+            // Приветствие
+            document.getElementById('welcomeName').textContent = 
+                currentUser.firstName || currentUser.email;
+            document.getElementById('userEmail').textContent = currentUser.email;
+            document.getElementById('userRole').textContent = 
+                currentUser.role === 'ADMIN' ? 'Администратор' : 'Пользователь';
+
+            // Показываем админ панель если нужно
+            if (currentUser.role === 'ADMIN') {
+                document.getElementById('adminPanel').style.display = 'block';
+            }
+
+            // Статистика
+            document.getElementById('libraryCount').textContent = stats.totalLibraries;
+            document.getElementById('bookCount').textContent = stats.totalBooks;
+            document.getElementById('availableCount').textContent = stats.totalAvailableBooks;
+
+            // Библиотеки
+            let libsHTML = '';
+            libraries.forEach(lib => {
+                libsHTML += `
+                    <div class="book-card p-3">
+                        <h6>${lib.name}</h6>
+                        <p class="text-muted small mb-1">${lib.address}</p>
+                        <p class="small">${lib.description}</p>
+                        <span class="badge bg-primary">${lib.books?.length || 0} книг</span>
+                    </div>
+                `;
+            });
+            document.getElementById('librariesList').innerHTML = 
+                libsHTML || '<p class="text-muted">Библиотеки не найдены</p>';
+
+            // Книги
+            let booksHTML = '';
+            books.slice(0, 5).forEach(book => {
+                booksHTML += `
+                    <div class="book-card p-3">
+                        <h6>${book.title}</h6>
+                        <p class="text-muted small mb-1">${book.author} (${book.year})</p>
+                        <p class="small">${book.description?.substring(0, 100)}...</p>
+                        <span class="badge bg-secondary">${book.library.name}</span>
+                        <span class="badge bg-success ms-1">${book.availableCopies}/${book.totalCopies}</span>
+                    </div>
+                `;
+            });
+            document.getElementById('booksList').innerHTML = 
+                booksHTML || '<p class="text-muted">Книги не найдены</p>';
+        }
+
+        // Переключение форм
+        function showLogin() {
+            document.getElementById('authSection').classList.remove('d-none');
+            document.getElementById('registerSection').classList.add('d-none');
+            document.getElementById('mainContent').classList.add('d-none');
+            document.getElementById('authError').classList.add('d-none');
+        }
+
+        function showRegister() {
+            document.getElementById('authSection').classList.add('d-none');
+            document.getElementById('registerSection').classList.remove('d-none');
+            document.getElementById('mainContent').classList.add('d-none');
+            document.getElementById('regError').classList.add('d-none');
+        }
+
+        function showMainContent() {
+            document.getElementById('authSection').classList.add('d-none');
+            document.getElementById('registerSection').classList.add('d-none');
+            document.getElementById('mainContent').classList.remove('d-none');
+        }
+
+        // Утилиты
+        function showAuthError(message) {
+            const errorEl = document.getElementById('authError');
+            errorEl.textContent = message;
+            errorEl.classList.remove('d-none');
+        }
+
+        function showRegError(message) {
+            const errorEl = document.getElementById('regError');
+            errorEl.textContent = message;
+            errorEl.classList.remove('d-none');
+        }
+
+        function showAuthSuccess(message) {
+            alert(message);
+        }
+
+        // Админ функции
+        function addBook() {
+            alert('Функция добавления книги в разработке');
+        }
+
+        function manageLibraries() {
+            alert('Функция управления библиотеками в разработке');
+        }
+
+        function viewUsers() {
+            alert('Функция просмотра пользователей в разработке');
+        }
+    </script>
+</body>
+</html>

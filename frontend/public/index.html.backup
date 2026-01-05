@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Библиотечный Агрегатор</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { background: #2c3e50; color: white; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+        .api-section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        button { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #2980b9; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 4px; overflow: auto; }
+        .status { padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .loading { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 Библиотечный Агрегатор</h1>
+            <p>API для поиска и бронирования книг в библиотеках</p>
+        </header>
+
+        <div class="api-section">
+            <h2>🩺 Проверка состояния API</h2>
+            <button onclick="checkHealth()">Проверить Health</button>
+            <div id="health-status"></div>
+        </div>
+
+        <div class="api-section">
+            <h2>📖 Список библиотек</h2>
+            <button onclick="getLibraries()">Получить библиотеки</button>
+            <div id="libraries"></div>
+        </div>
+
+        <div class="api-section">
+            <h2>🔍 Поиск книг</h2>
+            <input type="text" id="search-book" placeholder="Название книги">
+            <button onclick="searchBooks()">Найти книги</button>
+            <div id="books"></div>
+        </div>
+
+        <div class="api-section">
+            <h2>🔗 Ссылки</h2>
+            <ul>
+                <li><a href="/api-docs" target="_blank">Swagger документация</a></li>
+                <li><a href="/api/health" target="_blank">Health check</a></li>
+                <li><a href="/api/status" target="_blank">Статус системы</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        
+        function showStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function formatJSON(data) {
+            return `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        }
+
+        async function checkHealth() {
+            showStatus('health-status', 'Проверяем состояние API...', 'loading');
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                showStatus('health-status', formatJSON(data), 'success');
+            } catch (error) {
+                showStatus('health-status', `Ошибка: ${error.message}`, 'error');
+            }
+        }
+
+        async function getLibraries() {
+            showStatus('libraries', 'Загружаем библиотеки...', 'loading');
+            try {
+                const response = await fetch(`${API_BASE}/libraries`);
+                const data = await response.json();
+                showStatus('libraries', formatJSON(data), 'success');
+            } catch (error) {
+                showStatus('libraries', `Ошибка: ${error.message}`, 'error');
+            }
+        }
+
+        async function searchBooks() {
+            const query = document.getElementById('search-book').value;
+            showStatus('books', 'Ищем книги...', 'loading');
+            try {
+                const url = query 
+                    ? `${API_BASE}/libraries/books/search?title=${encodeURIComponent(query)}`
+                    : `${API_BASE}/libraries/books/search`;
+                const response = await fetch(url);
+                const data = await response.json();
+                showStatus('books', formatJSON(data), 'success');
+            } catch (error) {
+                showStatus('books', `Ошибка: ${error.message}`, 'error');
+            }
+        }
+
+        // Проверяем API при загрузке страницы
+        window.onload = checkHealth;
+    </script>
+</body>
+</html>

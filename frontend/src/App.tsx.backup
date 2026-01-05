@@ -1,0 +1,179 @@
+import React, { useState, useEffect } from 'react';
+import './App.css';
+
+interface Book {
+  id: number;
+  title: string;
+  author: string;
+  year: number;
+  description: string;
+  totalCopies: number;
+  availableCopies: number;
+  library: {
+    id: number;
+    name: string;
+    address: string;
+  };
+}
+
+interface Library {
+  id: number;
+  name: string;
+  address: string;
+  description: string;
+  books: Book[];
+}
+
+interface Stats {
+  totalLibraries: number;
+  totalBooks: number;
+  totalAvailableBooks: number;
+}
+
+function App() {
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [libraries, setLibraries] = useState<Library[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'stats' | 'books' | 'libraries'>('stats');
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [statsRes, booksRes, libsRes] = await Promise.all([
+        fetch('/api/libraries/stats/counts'),
+        fetch('/api/libraries/books/new'),
+        fetch('/api/libraries')
+      ]);
+      
+      const statsData = await statsRes.json();
+      const booksData = await booksRes.json();
+      const libsData = await libsRes.json();
+      
+      setStats(statsData);
+      setBooks(booksData);
+      setLibraries(libsData);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="loading">
+        <div className="spinner"></div>
+        <p>Загрузка данных...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="App">
+      <header className="header">
+        <h1>��� Библиотечная система</h1>
+        <p>Управление библиотеками и книгами</p>
+      </header>
+
+      <nav className="tabs">
+        <button 
+          className={activeTab === 'stats' ? 'active' : ''}
+          onClick={() => setActiveTab('stats')}
+        >
+          ��� Статистика
+        </button>
+        <button 
+          className={activeTab === 'books' ? 'active' : ''}
+          onClick={() => setActiveTab('books')}
+        >
+          ��� Книги ({books.length})
+        </button>
+        <button 
+          className={activeTab === 'libraries' ? 'active' : ''}
+          onClick={() => setActiveTab('libraries')}
+        >
+          ���️ Библиотеки ({libraries.length})
+        </button>
+      </nav>
+
+      <main className="main-content">
+        {activeTab === 'stats' && stats && (
+          <div className="stats-grid">
+            <div className="stat-card">
+              <h3>���️ Библиотек</h3>
+              <p className="stat-number">{stats.totalLibraries}</p>
+            </div>
+            <div className="stat-card">
+              <h3>��� Всего книг</h3>
+              <p className="stat-number">{stats.totalBooks}</p>
+            </div>
+            <div className="stat-card">
+              <h3>✅ Доступно книг</h3>
+              <p className="stat-number">{stats.totalAvailableBooks}</p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'books' && (
+          <div className="books-grid">
+            {books.map(book => (
+              <div key={book.id} className="book-card">
+                <h3>{book.title}</h3>
+                <p className="author">��� {book.author}</p>
+                <p className="year">��� {book.year} год</p>
+                <p className="library">���️ {book.library.name}</p>
+                <p className="description">{book.description}</p>
+                <div className="copies">
+                  <span>��� Всего: {book.totalCopies}</span>
+                  <span>✅ Доступно: {book.availableCopies}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'libraries' && (
+          <div className="libraries-list">
+            {libraries.map(library => (
+              <div key={library.id} className="library-card">
+                <h3>{library.name}</h3>
+                <p className="address">�� {library.address}</p>
+                <p className="description">{library.description}</p>
+                <div className="books-count">
+                  <span>��� Книг в библиотеке: {library.books?.length || 0}</span>
+                </div>
+                {library.books && library.books.length > 0 && (
+                  <div className="library-books">
+                    <h4>Книги в этой библиотеке:</h4>
+                    <ul>
+                      {library.books.slice(0, 3).map(book => (
+                        <li key={book.id}>{book.title} - {book.author}</li>
+                      ))}
+                      {library.books.length > 3 && (
+                        <li>... и ещё {library.books.length - 3} книг</li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+
+      <footer className="footer">
+        <p>API работает на порту 3000 | Всего книг в системе: {stats?.totalBooks}</p>
+        <button className="refresh-btn" onClick={fetchData}>
+          ��� Обновить данные
+        </button>
+      </footer>
+    </div>
+  );
+}
+
+export default App;

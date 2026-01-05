@@ -1,0 +1,193 @@
+const express = require('express');
+const cors = require('cors');
+const authRouter = require('./auth');
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+// Middleware
+app.use(cors({
+  origin: 'http://localhost:3004',
+  credentials: true
+}));
+app.use(express.json());
+
+// Маршруты аутентификации
+app.use('/api/auth', authRouter);
+
+// Статические данные
+const libraries = [
+  {
+    id: 1,
+    name: 'Центральная библиотека им. Пушкина',
+    address: 'ул. Пушкина, 1',
+    description: 'Главная библиотека города'
+  },
+  {
+    id: 2,
+    name: 'Городская библиотека',
+    address: 'ул. Ленина, 10',
+    description: 'Культурно-образовательный центр'
+  }
+];
+
+const books = [
+  {
+    id: 1,
+    libraryId: 1,
+    title: 'Война и мир',
+    author: 'Лев Толстой',
+    year: 1869,
+    available: true
+  },
+  {
+    id: 2,
+    libraryId: 1,
+    title: 'Преступление и наказание',
+    author: 'Фёдор Достоевский',
+    year: 1866,
+    available: true
+  }
+];
+
+// Публичные маршруты
+app.get('/api', (req, res) => {
+  res.json({
+    message: 'Book Library Aggregator API',
+    version: '1.0',
+    endpoints: {
+      auth: {
+        login: 'POST /api/auth/login',
+        register: 'POST /api/auth/register',
+        me: 'GET /api/auth/me'
+      },
+      libraries: 'GET /api/libraries',
+      books: 'GET /api/books',
+      protected: 'GET /api/protected'
+    }
+  });
+});
+
+app.get('/api/libraries', (req, res) => {
+  res.json(libraries);
+});
+
+app.get('/api/books', (req, res) => {
+  res.json(books);
+});
+
+
+// Статистика библиотек и книг
+app.get('/api/libraries/stats/counts', (req, res) => {
+  const totalAvailableBooks = books.reduce((sum, book) => {
+    return sum + (book.availableCopies || 0);
+  }, 0);
+  
+  res.json({
+    totalLibraries: libraries.length,
+    totalBooks: books.length,
+    totalAvailableBooks: totalAvailableBooks
+  });
+});
+
+// Поиск книг по названию
+app.get('/api/libraries/books/search', (req, res) => {
+  const { title } = req.query;
+  let filteredBooks = books;
+  
+  if (title) {
+    filteredBooks = books.filter(book => 
+      book.title.toLowerCase().includes(title.toLowerCase())
+    );
+  }
+  
+  res.json(filteredBooks);
+});
+
+// Альтернативный маршрут для книг (для совместимости с frontend)
+app.get('/api/libraries/books/new', (req, res) => {
+  res.json(books);
+});
+
+// Получить книги конкретной библиотеки
+app.get('/api/libraries/:id/books', (req, res) => {
+  const libraryId = parseInt(req.params.id);
+  const libraryBooks = books.filter(book => book.libraryId === libraryId);
+  res.json(libraryBooks);
+});
+
+// Защищенный маршрут
+app.get('/api/protected', (req, res) => {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Bearer fake-jwt-token-')) {
+    return res.status(401).json({
+      success: false,
+      message: 'Требуется авторизация'
+    });
+  }
+
+  // Поиск книг
+app.get('/api/libraries/books/search', (req, res) => {
+  const { title, author } = req.query;
+  let filteredBooks = books;
+  
+  if (title) {
+    filteredBooks = filteredBooks.filter(book => 
+      book.title.toLowerCase().includes(title.toLowerCase())
+    );
+  }
+  
+  if (author) {
+    filteredBooks = filteredBooks.filter(book => 
+      book.author.toLowerCase().includes(author.toLowerCase())
+    );
+  }
+  
+  res.json(filteredBooks);
+});
+  
+  res.json({
+    success: true,
+    message: 'Доступ к защищенному маршруту разрешен',
+    data: 'Секретные данные'
+  });
+});
+
+// Корневой маршрут
+app.get('/', (req, res) => {
+  res.send(`
+    <h1>Book Library Aggregator API</h1>
+    <p>Сервер работает!</p>
+    <p><a href="/api">API информация</a></p>
+  `);
+});
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    service: 'Book Library Aggregator API'
+  });
+});
+
+// Status endpoint
+app.get('/api/status', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'Сервер работает нормально',
+    version: '1.0',
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Запуск сервера
+app.listen(PORT, () => {
+  console.log(`Сервер запущен на порту ${PORT}`);
+  console.log(`API: http://localhost:${PORT}/api`);
+  console.log('Тестовые пользователи:');
+  console.log('1. admin@library.com / admin123');
+  console.log('2. user@library.com / user123');
+  console.log('3. demo@demo.com / demo123');
+});

@@ -1,0 +1,343 @@
+import React, { useState, useEffect } from 'react';
+import Auth from './Auth';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { 
+  AppBar, 
+  Toolbar, 
+  Typography, 
+  Button, 
+  Container, 
+  Box, 
+  CircularProgress,
+  Alert,
+  Card,
+  CardContent,
+  Grid
+} from '@mui/material';
+import { LibraryBooks, MenuBook, Home } from '@mui/icons-material';
+
+// Простые компоненты
+const HomePage: React.FC = () => {
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/libraries/stats/counts')
+      .then(res => res.json())
+      .then(data => {
+        setStats(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  return (
+    <Container>
+      <Box my={4}>
+        <Typography variant="h3" gutterBottom>
+          Добро пожаловать в Библиотечную систему
+        </Typography>
+        <Typography variant="h6" color="textSecondary" paragraph>
+          Управляйте книгами и библиотеками в одном месте
+        </Typography>
+      </Box>
+
+      {loading ? (
+        <Box display="flex" justifyContent="center" my={4}>
+          <CircularProgress />
+        </Box>
+      ) : stats ? (
+        <Grid container spacing={3} my={4}>
+          <Grid item xs={12} sm={4}>
+            <Card>
+              <CardContent>
+                <Typography color="textSecondary" gutterBottom>
+                  Библиотек
+                </Typography>
+                <Typography variant="h4">
+                  {stats.totalLibraries}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <Card>
+              <CardContent>
+                <Typography color="textSecondary" gutterBottom>
+                  Всего книг
+                </Typography>
+                <Typography variant="h4">
+                  {stats.totalBooks}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <Card>
+              <CardContent>
+                <Typography color="textSecondary" gutterBottom>
+                  Доступно книг
+                </Typography>
+                <Typography variant="h4">
+                  {stats.totalAvailableBooks}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      ) : (
+        <Alert severity="warning">
+          Не удалось загрузить статистику. Проверьте подключение к API.
+        </Alert>
+      )}
+    </Container>
+  );
+};
+
+const LibrariesPage: React.FC = () => {
+  const [libraries, setLibraries] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/libraries')
+      .then(res => res.json())
+      .then(data => {
+        setLibraries(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  return (
+    <Container>
+      <Box my={4}>
+        <Typography variant="h4" gutterBottom>
+          Библиотеки
+        </Typography>
+      </Box>
+
+      {loading ? (
+        <Box display="flex" justifyContent="center">
+          <CircularProgress />
+        </Box>
+      ) : libraries.length === 0 ? (
+        <Alert severity="info">Библиотеки не найдены</Alert>
+      ) : (
+        <Grid container spacing={3}>
+          {libraries.map(lib => (
+            <Grid item xs={12} sm={6} md={4} key={lib.id}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    {lib.name}
+                  </Typography>
+                  <Typography color="textSecondary" gutterBottom>
+                    {lib.address}
+                  </Typography>
+                  <Typography variant="body2" paragraph>
+                    {lib.description}
+                  </Typography>
+                  <Typography variant="body2" color="primary">
+                    Книг: {lib.books?.length || 0}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+    </Container>
+  );
+};
+
+const BooksPage: React.FC = () => {
+  const [books, setBooks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/libraries/books/new')
+      .then(res => res.json())
+      .then(data => {
+        setBooks(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  return (
+    <Container>
+      <Box my={4}>
+        <Typography variant="h4" gutterBottom>
+          Книги
+        </Typography>
+      </Box>
+
+      {loading ? (
+        <Box display="flex" justifyContent="center">
+          <CircularProgress />
+        </Box>
+      ) : books.length === 0 ? (
+        <Alert severity="info">Книги не найдены</Alert>
+      ) : (
+        <Grid container spacing={3}>
+          {books.map(book => (
+            <Grid item xs={12} sm={6} md={4} key={book.id}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    {book.title}
+                  </Typography>
+                  <Typography color="textSecondary" gutterBottom>
+                    {book.author} ({book.year})
+                  </Typography>
+                  <Typography variant="body2" paragraph>
+                    {book.description?.substring(0, 100)}...
+                  </Typography>
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography variant="body2" color="primary">
+                      {book.library.name}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      {book.availableCopies}/{book.totalCopies}
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+    </Container>
+  );
+};
+
+const Navigation: React.FC = () => {
+  return (
+    <AppBar position="static">
+      <Container>
+        <Toolbar>
+          <LibraryBooks sx={{ mr: 2 }} />
+          <Typography variant="h6" component={Link} to="/" sx={{ flexGrow: 1, textDecoration: 'none', color: 'inherit' }}>
+            Библиотечная система
+          </Typography>
+          <Button color="inherit" component={Link} to="/" startIcon={<Home />}>
+            Главная
+          </Button>
+          <Button color="inherit" component={Link} to="/libraries" startIcon={<LibraryBooks />}>
+            Библиотеки
+          </Button>
+          <Button color="inherit" component={Link} to="/books" startIcon={<MenuBook />}>
+            Книги
+          </Button>
+        </Toolbar>
+      </Container>
+    </AppBar>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+      <header style={{ textAlign: 'center', marginBottom: '40px' }}>
+        <h1 style={{ color: '#1976d2' }}>��� Библиотечный Агрегатор</h1>
+        <p>Поиск и бронирование книг в библиотеках города</p>
+      </header>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '30px' }}>
+        {/* Левая колонка - Аутентификация */}
+        <div>
+          <Auth />
+        </div>
+
+        {/* Правая колонка - Основной контент */}
+        <div>
+          <h2>Функционал системы</h2>
+          
+          <div style={{ marginBottom: '30px' }}>
+            <h3>��� Проверка состояния API</h3>
+            <button 
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/health');
+                  const data = await response.json();
+                  alert(`Статус: ${data.status}\nВремя: ${new Date(data.timestamp).toLocaleTimeString()}`);
+                } catch (error) {
+                  alert('Ошибка при проверке API');
+                }
+              }}
+              style={{ padding: '10px 20px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            >
+              Проверить Health
+            </button>
+          </div>
+
+          <div style={{ marginBottom: '30px' }}>
+            <h3>��� Список библиотек</h3>
+            <button 
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/libraries');
+                  const data = await response.json();
+                  alert(`Найдено библиотек: ${data.length}\nПервая библиотека: ${data[0]?.name}`);
+                } catch (error) {
+                  alert('Ошибка при получении библиотек');
+                }
+              }}
+              style={{ padding: '10px 20px', backgroundColor: '#17a2b8', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            >
+              Получить библиотеки
+            </button>
+          </div>
+
+          <div style={{ marginBottom: '30px' }}>
+            <h3>��� Поиск книг</h3>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <input
+                type="text"
+                placeholder="Название книги"
+                style={{ padding: '10px', flex: 1, border: '1px solid #ddd', borderRadius: '4px' }}
+              />
+              <button 
+                style={{ padding: '10px 20px', backgroundColor: '#ffc107', color: '#212529', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                Найти книги
+              </button>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '30px' }}>
+            <h3>���️ Защищенный маршрут</h3>
+            <button 
+              onClick={async () => {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                  alert('Сначала войдите в систему!');
+                  return;
+                }
+
+                try {
+                  const response = await fetch('/api/protected', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                  });
+                  const data = await response.json();
+                  alert(data.message);
+                } catch (error) {
+                  alert('Ошибка доступа к защищенному маршруту');
+                }
+              }}
+              style={{ padding: '10px 20px', backgroundColor: '#6f42c1', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            >
+              Доступ к защищенным данным
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <footer style={{ marginTop: '50px', textAlign: 'center', color: '#666', borderTop: '1px solid #eee', paddingTop: '20px' }}>
+        <p>© 2024 Библиотечный Агрегатор. Все права защищены.</p>
+      </footer>
+    </div>
+  );
+};
+
+export default App;
