@@ -97,8 +97,9 @@ cd book-library-aggregator
 docker-compose -f docker-compose.dev.yaml up -d postgres
 
 # 3. Запустить бэкенд
-cd backend
+cd backend/src
 npm install
+node server.js
 cp .env.example .env  # настройте .env файл
 npm run start:dev
 
