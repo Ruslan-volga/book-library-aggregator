@@ -1,0 +1,137 @@
+import React, { useEffect } from 'react';
+import { Provider, useDispatch, useSelector } from 'react-redux';
+import { store, RootState, AppDispatch } from './store';
+import { fetchBooks, setSearchQuery } from './store/slices/booksSlice';
+import { Container, Typography, TextField, Button, Grid, Card, CardContent, CircularProgress, Alert, Box } from '@mui/material';
+import { Search as SearchIcon, Book as BookIcon } from '@mui/icons-material';
+
+// Главный компонент с Redux
+const BookLibraryApp = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { books, filteredBooks, loading, error, searchQuery } = useSelector(
+    (state: RootState) => state.books
+  );
+
+  useEffect(() => {
+    dispatch(fetchBooks());
+  }, [dispatch]);
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      dispatch(fetchBooks()); // Временная реализация - фильтруем локально
+    } else {
+      dispatch(fetchBooks());
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  // Локальная фильтрация (временно)
+  const displayedBooks = searchQuery.trim()
+    ? filteredBooks.filter(book =>
+        book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        book.author.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : filteredBooks;
+
+  return (
+    <Container>
+      <Box my={4}>
+        <Typography variant="h4" gutterBottom>
+          <BookIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+          Библиотека книг с Redux
+        </Typography>
+
+        {/* Поиск */}
+        <Box sx={{ display: 'flex', gap: 2, mb: 4, alignItems: 'center' }}>
+          <TextField
+            fullWidth
+            placeholder="Поиск книг..."
+            value={searchQuery}
+            onChange={(e) => dispatch(setSearchQuery(e.target.value))}
+            onKeyPress={handleKeyPress}
+            InputProps={{
+              startAdornment: <SearchIcon sx={{ mr: 1, color: 'action.active' }} />,
+            }}
+          />
+          <Button
+            variant="contained"
+            onClick={handleSearch}
+            disabled={loading}
+          >
+            {loading ? 'Поиск...' : 'Найти'}
+          </Button>
+        </Box>
+
+        {/* Ошибки */}
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
+
+        {/* Загрузка */}
+        {loading ? (
+          <Box display="flex" justifyContent="center" my={4}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <>
+            <Typography variant="h6" gutterBottom>
+              Найдено книг: {displayedBooks.length}
+            </Typography>
+
+            {/* Список книг */}
+            <Grid container spacing={3}>
+              {displayedBooks.map((book) => (
+                <Grid item xs={12} sm={6} md={4} key={book.id}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        {book.title}
+                      </Typography>
+                      <Typography color="text.secondary" gutterBottom>
+                        {book.author} ({book.year})
+                      </Typography>
+                      {book.description && (
+                        <Typography variant="body2" paragraph>
+                          {book.description}
+                        </Typography>
+                      )}
+                      {book.library?.name && (
+                        <Typography variant="body2" color="primary">
+                          Библиотека: {book.library.name}
+                        </Typography>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+
+            {displayedBooks.length === 0 && !loading && (
+              <Alert severity="info" sx={{ mt: 3 }}>
+                Книги не найдены
+              </Alert>
+            )}
+          </>
+        )}
+      </Box>
+    </Container>
+  );
+};
+
+// Главный App компонент с Provider
+const App = () => {
+  return (
+    <Provider store={store}>
+      <BookLibraryApp />
+    </Provider>
+  );
+};
+
+export default App;

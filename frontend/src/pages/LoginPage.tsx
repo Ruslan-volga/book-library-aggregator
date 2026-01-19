@@ -1,133 +1,126 @@
 import React, { useState } from 'react';
-import {
-  Container,
-  Paper,
-  Typography,
-  TextField,
-  Button,
-  Box,
-  Alert,
-  CircularProgress
-} from '@mui/material';
-import { Lock as LockIcon } from '@mui/icons-material';
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { login } from '../store/slices/authSlice';
+import { 
+  Container, 
+  TextField, 
+  Button, 
+  Typography, 
+  Paper, 
+  Box,
+  Alert
+} from '@mui/material';
 
-interface LoginPageProps {
-  onLogin: () => void;
-}
-
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
-  const [email, setEmail] = useState('admin@library.com');
-  const [password, setPassword] = useState('admin123');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const LoginPage: React.FC = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
+    setError('');
 
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-
-      console.log('Response status:', response.status);
-      
-      const data = await response.json();
-      console.log('Login response data:', data);
-
-      if (response.ok && data.success) {
-        // Сохраняем токен и данные пользователя
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user || {}));
-        
-        // Уведомляем App о успешном входе
-        onLogin();
-        
-        // Переходим на главную
-        navigate('/');
-      } else {
-        setError(data.message || 'Неверный email или пароль');
-      }
-    } catch (err) {
-      console.error('Login error:', err);
-      setError('Ошибка соединения с сервером');
-    } finally {
-      setLoading(false);
+    // Для демо-режима используем простую логику
+    if (!email.trim()) {
+      setError('Введите email');
+      return;
     }
+
+    // Определяем роль по email
+    const emailLower = email.toLowerCase();
+    let role: 'admin' | 'manager' | 'client' = 'client';
+    let name = email.split('@')[0];
+
+    if (emailLower.includes('admin') || emailLower.includes('library')) {
+      role = 'admin';
+      name = 'Администратор';
+    } else if (emailLower.includes('manager')) {
+      role = 'manager';
+      name = 'Менеджер';
+    }
+
+    dispatch(login({ 
+      email: email.trim(),
+      role: role,
+      name: name
+    }));
+    
+    navigate('/');
   };
 
   return (
     <Container maxWidth="sm">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 3 }}>
-            <LockIcon sx={{ mr: 1 }} />
-            <Typography component="h1" variant="h5">
-              Вход в систему
-            </Typography>
-          </Box>
-
+      <Box sx={{ mt: 8, mb: 4 }}>
+        <Paper elevation={3} sx={{ p: 4 }}>
+          <Typography variant="h4" align="center" gutterBottom>
+            Вход в систему
+          </Typography>
+          
+          <Typography variant="body1" align="center" color="text.secondary" paragraph>
+            Book Library Aggregator
+          </Typography>
+          
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
             </Alert>
           )}
-
-          <Alert severity="info" sx={{ mb: 3 }}>
-            Для демонстрации используйте:<br />
-            Email: admin@library.com<br />
-            Пароль: admin123
-          </Alert>
-
-          <form onSubmit={handleSubmit}>
+          
+          <Box component="form" onSubmit={handleSubmit}>
             <TextField
-              margin="normal"
-              required
               fullWidth
-              id="email"
               label="Email"
-              name="email"
-              autoComplete="email"
-              autoFocus
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-            />
-            <TextField
               margin="normal"
               required
+              autoComplete="email"
+              placeholder="admin@library.com"
+            />
+            
+            <TextField
               fullWidth
-              name="password"
               label="Пароль"
               type="password"
-              id="password"
-              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
+              margin="normal"
+              required
+              autoComplete="current-password"
+              placeholder="Любой пароль"
             />
+            
             <Button
               type="submit"
               fullWidth
               variant="contained"
+              size="large"
               sx={{ mt: 3, mb: 2 }}
-              disabled={loading}
             >
-              {loading ? <CircularProgress size={24} /> : 'Войти'}
+              Войти
             </Button>
-          </form>
+          </Box>
+          
+          <Box sx={{ mt: 3 }}>
+            <Typography variant="body2" color="text.secondary">
+              <strong>Демо-доступ:</strong>
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              • Email с "admin" или "library" → Администратор
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              • Email с "manager" → Менеджер
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              • Любой другой email → Клиент
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              <strong>Примеры:</strong> admin@library.com, manager@test.com, user@mail.com
+            </Typography>
+          </Box>
         </Paper>
       </Box>
     </Container>

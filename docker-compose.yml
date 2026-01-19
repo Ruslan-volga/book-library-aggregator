@@ -1,57 +1,67 @@
+version: '3.8'
+
 services:
+  # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
-    container_name: library_postgres
-    restart: unless-stopped
+    container_name: library-postgres
     environment:
+      POSTGRES_DB: library_db
       POSTGRES_USER: library_user
       POSTGRES_PASSWORD: library_password
-      POSTGRES_DB: library_db
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U library_user -d library_db"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - ./init-db:/docker-entrypoint-initdb.d
+    networks:
+      - library-network
+    restart: unless-stopped
 
+  # NestJS Backend API
   backend:
     build: ./backend
-    container_name: library_backend
-    restart: unless-stopped
+    container_name: library-backend
+    ports:
+      - "3001:3001"
     environment:
       NODE_ENV: development
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_USER: library_user
-      POSTGRES_PASSWORD: library_password
-      POSTGRES_DB: library_db
-      JWT_SECRET: your-super-secret-jwt-key-change-in-production
-      PORT: 3000
-    ports:
-      - "3000:3000"
-    depends_on:
-      postgres:
-        condition: service_healthy
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: library_db
+      DATABASE_USER: library_user
+      DATABASE_PASSWORD: library_password
+      JWT_SECRET: your-jwt-secret-key-change-this
     volumes:
-      - ./backend:/usr/src/app
-      - /usr/src/app/node_modules
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+    networks:
+      - library-network
+    restart: unless-stopped
     command: npm run start:dev
 
+  # React Frontend
   frontend:
     build: ./frontend
-    container_name: library_frontend
-    restart: unless-stopped
+    container_name: library-frontend
     ports:
-      - "80:80"
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:3001
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     depends_on:
       - backend
+    networks:
+      - library-network
+    restart: unless-stopped
 
 networks:
-  default:
-    name: library-network
+  library-network:
+    driver: bridge
 
 volumes:
   postgres_data:

@@ -1,324 +1,186 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import {
-  Container,
-  Box,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  CircularProgress,
-  Alert,
-  Button
-} from '@mui/material';
-import { LibraryBooks as LibraryIcon } from '@mui/icons-material';
-
-import Navigation from './components/Navigation';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { store } from './store';
+import Dashboard from './pages/Dashboard';
+import SupportPage from './pages/SupportPage';
+import AdminDashboard from './pages/AdminDashboard';
 import LoginPage from './pages/LoginPage';
-import LibrariesPage from './pages/LibrariesPage';
-import BooksPage from './pages/BooksPage';
-import BookSearch from './components/BookSearch'; // Импорт компонента
+import LibraryBooksPage from './pages/LibraryBooksPage';
+import UsersManagement from './components/Admin/UsersManagement';
+import { AppBar, Toolbar, Button, Container, Box, Typography } from '@mui/material';
+import { useSelector } from 'react-redux';
+import { RootState } from './store';
 
-interface Stats {
-  totalLibraries: number;
-  totalBooks: number;
-  totalAvailableBooks: number;
-}
-
-interface Library {
-  id: number;
-  name: string;
-  address: string;
-  description: string;
-  books?: any[];
-}
-
-interface Book {
-  id: number;
-  title: string;
-  author: string;
-  year: number;
-  library?: {
-    name: string;
-  };
-  description?: string;
-  libraryId?: number;
-  totalCopies?: number;
-  availableCopies?: number;
-}
-
-const API_BASE_URL = 'http://localhost:3001';
-
-const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return !!localStorage.getItem('token');
-  });
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [libraries, setLibraries] = useState<Library[]>([]);
-  const [books, setBooks] = useState<Book[]>([]);
-  const [loading, setLoading] = useState({
-    stats: true,
-    libraries: false
-  });
-  const [apiMessage, setApiMessage] = useState<string>('');
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setIsAuthenticated(false);
-  };
-
-  const handleLogin = () => {
-    setIsAuthenticated(true);
-  };
-
-  // Загружаем статистику при монтировании
-  useEffect(() => {
-    fetch(`${API_BASE_URL}/api/libraries/stats/counts`)
-      .then(res => res.json())
-      .then(data => {
-        setStats(data);
-        setLoading(prev => ({ ...prev, stats: false }));
-      })
-      .catch(() => setLoading(prev => ({ ...prev, stats: false })));
-  }, []);
-
-  // Загружаем библиотеки
-  const loadLibraries = () => {
-    setLoading(prev => ({ ...prev, libraries: true }));
-    fetch(`${API_BASE_URL}/api/libraries`)
-      .then(res => res.json())
-      .then(data => {
-        setLibraries(data);
-        setLoading(prev => ({ ...prev, libraries: false }));
-      })
-      .catch(() => setLoading(prev => ({ ...prev, libraries: false })));
-  };
-
-  // Функции для BookSearch компонента
-  const handleSearchAPI = async (query: string): Promise<Book[]> => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/books`);
-      if (!response.ok) throw new Error('Failed to fetch books');
-      
-      const allBooks = await response.json();
-      const searchTerm = query.toLowerCase();
-      
-      const filtered = allBooks.filter((book: Book) =>
-        book.title.toLowerCase().includes(searchTerm) ||
-        book.author.toLowerCase().includes(searchTerm) ||
-        book.description?.toLowerCase().includes(searchTerm)
-      );
-      
-      return filtered;
-    } catch (error) {
-      console.error('Search API error:', error);
-      return [];
-    }
-  };
-
-  const loadAllBooksAPI = async (): Promise<Book[]> => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/books`);
-      if (!response.ok) throw new Error('Failed to fetch books');
-      const data = await response.json();
-      setBooks(data); // Обновляем состояние в App
-      return data;
-    } catch (error) {
-      console.error('Load books error:', error);
-      return [];
-    }
-  };
-
-  // Тестируем защищенный маршрут
-  const testProtectedRoute = () => {
-    const token = localStorage.getItem('token');
-    fetch(`${API_BASE_URL}/api/protected`, {
-      headers: token ? { Authorization: token } : {}
-    })
-      .then(res => {
-        if (res.status === 401) {
-          return { message: 'Требуется авторизация' };
-        }
-        return res.json();
-      })
-      .then(data => setApiMessage(data.message))
-      .catch(() => setApiMessage('Ошибка подключения'));
-  };
-
-  // Health check
-  const testHealth = () => {
-    fetch(`${API_BASE_URL}/api/health`)
-      .then(res => res.json())
-      .then(data => 
-        setApiMessage(`Status: ${data.status}, Uptime: ${data.uptime.toFixed(1)}s`)
-      )
-      .catch(() => setApiMessage('Health check failed'));
-  };
-
-  // Компонент главной страницы
-  const HomePage = () => {
+// Компонент для защищенных маршрутов
+const ProtectedRoute: React.FC<{ 
+  children: React.ReactNode;
+  requiredRole?: 'admin' | 'manager' | 'client';
+}> = ({ children, requiredRole = 'client' }) => {
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+  
+  if (!isAuthenticated) {
     return (
-      <Box my={4}>
-        <Typography variant="h4" gutterBottom>
-          📚 Библиотечный Агрегатор
+      <Container sx={{ mt: 4 }}>
+        <Typography variant="h5" gutterBottom>
+          Доступ запрещен
         </Typography>
-        <Typography variant="subtitle1" color="textSecondary" paragraph>
-          API для поиска и бронирования книг в библиотеках
+        <Typography variant="body1" paragraph>
+          Для доступа к этой странице необходимо войти в систему.
         </Typography>
-
-        {/* Проверка состояния API */}
-        <Box mb={4}>
-          <Typography variant="h6" gutterBottom>
-            🩺 Проверка состояния API
-          </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={testHealth}
-            sx={{ mr: 2 }}
-          >
-            Проверить Health
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={testProtectedRoute}
-          >
-            Тест защищенного маршрута
-          </Button>
-          {apiMessage && (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              {apiMessage}
-            </Alert>
-          )}
-        </Box>
-
-        {/* Статистика */}
-        <Box mb={4}>
-          <Typography variant="h6" gutterBottom>
-            📊 Статистика
-          </Typography>
-          {loading.stats ? (
-            <Box display="flex" justifyContent="center">
-              <CircularProgress />
-            </Box>
-          ) : stats ? (
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={4}>
-                <Card>
-                  <CardContent>
-                    <Typography color="textSecondary" gutterBottom>
-                      Библиотек
-                    </Typography>
-                    <Typography variant="h4">
-                      {stats.totalLibraries}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <Card>
-                  <CardContent>
-                    <Typography color="textSecondary" gutterBottom>
-                      Всего книг
-                    </Typography>
-                    <Typography variant="h4">
-                      {stats.totalBooks}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <Card>
-                  <CardContent>
-                    <Typography color="textSecondary" gutterBottom>
-                      Доступно книг
-                    </Typography>
-                    <Typography variant="h4">
-                      {stats.totalAvailableBooks}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          ) : (
-            <Alert severity="warning">Не удалось загрузить статистику</Alert>
-          )}
-        </Box>
-
-        {/* Библиотеки */}
-        <Box mb={4}>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6">
-              📖 Список библиотек
-            </Typography>
-            <Button
-              variant="outlined"
-              onClick={loadLibraries}
-              disabled={loading.libraries}
-            >
-              {loading.libraries ? 'Загрузка...' : 'Обновить'}
-            </Button>
-          </Box>
-          {loading.libraries ? (
-            <Box display="flex" justifyContent="center">
-              <CircularProgress />
-            </Box>
-          ) : libraries.length === 0 ? (
-            <Alert severity="info">Библиотеки не найдены. Нажмите "Обновить"</Alert>
-          ) : (
-            <Grid container spacing={3}>
-              {libraries.map((lib) => (
-                <Grid item xs={12} sm={6} md={4} key={lib.id}>
-                  <Card>
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom>
-                        {lib.name}
-                      </Typography>
-                      <Typography color="textSecondary" gutterBottom>
-                        {lib.address}
-                      </Typography>
-                      <Typography variant="body2" paragraph>
-                        {lib.description}
-                      </Typography>
-                      <Typography variant="body2" color="primary">
-                        Книг: {lib.books?.length || 0}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          )}
-        </Box>
-
-        {/* Книги и поиск - ИСПОЛЬЗУЕМ КОМПОНЕНТ */}
-        <BookSearch
-          onSearch={handleSearchAPI}
-          onLoadAll={loadAllBooksAPI}
-          initialBooks={books}
-        />
-      </Box>
-    );
-  };
-
-  return (
-    <Router>
-      <Navigation 
-        isAuthenticated={isAuthenticated} 
-        onLogout={handleLogout} 
-      />
-      
-      <Container>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
-          <Route path="/libraries" element={<LibrariesPage />} />
-          <Route path="/books" element={<BooksPage />} />
-        </Routes>
+        <Button variant="contained" component={Link} to="/login">
+          Войти
+        </Button>
       </Container>
-    </Router>
+    );
+  }
+  
+  if (requiredRole === 'admin' && user?.role !== 'admin') {
+    return (
+      <Container sx={{ mt: 4 }}>
+        <Typography variant="h5" gutterBottom>
+          Недостаточно прав
+        </Typography>
+        <Typography variant="body1" paragraph>
+          Для доступа к этой странице требуются права администратора.
+        </Typography>
+        <Button variant="contained" component={Link} to="/">
+          На главную
+        </Button>
+      </Container>
+    );
+  }
+  
+  return <>{children}</>;
+};
+
+// Компонент навигации
+const Navigation: React.FC = () => {
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+  
+  return (
+    <AppBar position="static">
+      <Toolbar>
+        <Typography variant="h6" sx={{ flexGrow: 1 }}>
+          Book Library Aggregator
+        </Typography>
+        
+        <Button color="inherit" component={Link} to="/">
+          Главная
+        </Button>
+        
+        <Button color="inherit" component={Link} to="/support">
+          Чат поддержки
+        </Button>
+        
+        {isAuthenticated ? (
+          <>
+            {user?.role === 'admin' && (
+              <Button color="inherit" component={Link} to="/admin">
+                Админ панель
+              </Button>
+            )}
+            <Button 
+              color="inherit" 
+              onClick={() => {
+                localStorage.removeItem('isAuthenticated');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userName');
+                window.location.href = '/';
+              }}
+            >
+              Выйти ({user?.name})
+            </Button>
+          </>
+        ) : (
+          <Button color="inherit" component={Link} to="/login">
+            Войти
+          </Button>
+        )}
+      </Toolbar>
+    </AppBar>
   );
 };
+
+// Главный компонент приложения
+const AppContent: React.FC = () => {
+  return (
+    <>
+      <Navigation />
+      <Container sx={{ mt: 4, mb: 4 }}>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/support" element={<SupportPage />} />
+          <Route path="/library/:libraryId" element={<LibraryBooksPage />} />
+          <Route 
+            path="/admin" 
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/users" 
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <UsersManagement />
+              </ProtectedRoute>
+            } 
+          />
+          <Route path="/login" element={<LoginPage />} />
+          
+          {/* Резервный маршрут для 404 */}
+          <Route 
+            path="*" 
+            element={
+              <Box sx={{ textAlign: 'center', mt: 4 }}>
+                <Typography variant="h4" gutterBottom>
+                  404 - Страница не найдена
+                </Typography>
+                <Button variant="contained" component={Link} to="/">
+                  На главную
+                </Button>
+              </Box>
+            } 
+          />
+        </Routes>
+      </Container>
+      
+      {/* Футер */}
+      <Box 
+        component="footer" 
+        sx={{ 
+          bgcolor: 'background.paper', 
+          py: 3, 
+          mt: 'auto',
+          borderTop: 1,
+          borderColor: 'divider'
+        }}
+      >
+        <Container maxWidth="lg">
+          <Typography variant="body2" color="text.secondary" align="center">
+            © {new Date().getFullYear()} Book Library Aggregator. Дипломный проект.
+          </Typography>
+          <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 1 }}>
+            Для демо используйте: admin@library.com / manager@test.com / user@mail.com
+          </Typography>
+        </Container>
+      </Box>
+    </>
+  );
+};
+
+// Главный компонент с провайдерами
+function App() {
+  return (
+    <Provider store={store}>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </Provider>
+  );
+}
 
 export default App;

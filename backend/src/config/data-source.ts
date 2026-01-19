@@ -1,22 +1,17 @@
-import { DataSource, DataSourceOptions } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
-import { config } from 'dotenv';
+import { DataSource } from 'typeorm';
+import * as dotenv from 'dotenv';
 
-config();
+dotenv.config();
 
-const configService = new ConfigService();
-
-export const dataSourceOptions: DataSourceOptions = {
+export const AppDataSource = new DataSource({
   type: 'postgres',
-  host: configService.get('POSTGRES_HOST') || 'localhost',
-  port: configService.get<number>('POSTGRES_PORT') || 5432,
-  username: configService.get('POSTGRES_USER') || 'library_user',
-  password: configService.get('POSTGRES_PASSWORD') || 'library_password',
-  database: configService.get('POSTGRES_DB') || 'library_db',
+  host: process.env.DATABASE_HOST || 'localhost',
+  port: parseInt(process.env.DATABASE_PORT || '5432'),
+  username: process.env.DATABASE_USER || 'library_user',
+  password: process.env.DATABASE_PASSWORD || 'library_password',
+  database: process.env.DATABASE_NAME || 'library_db',
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   migrations: [__dirname + '/../migrations/*{.ts,.js}'],
-  synchronize: configService.get('NODE_ENV') === 'development', // только для разработки!
-};
-
-const dataSource = new DataSource(dataSourceOptions);
-export default dataSource;
+  synchronize: process.env.NODE_ENV !== 'production',
+  logging: process.env.NODE_ENV !== 'production',
+});
