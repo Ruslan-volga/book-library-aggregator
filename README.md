@@ -48,36 +48,297 @@
 - **Axios** - HTTP клиент
 
 ## 📁 Структура проекта:
+СТРУКТУРА ПРОЕКТА:
+text
 book-library-aggregator/
-├── backend/ # NestJS бэкенд
-│ ├── src/
-│ │ ├── modules/ # Модули приложения
-│ │ │ ├── auth/ # Аутентификация
-│ │ │ ├── users/ # Пользователи
-│ │ │ ├── libraries/ # Библиотеки (в разработке)
-│ │ │ ├── book-rentals/ # Аренда книг (в разработке)
-│ │ │ └── support/ # Техподдержка (в разработке)
-│ │ ├── config/ # Конфигурации
-│ │ └── main.ts # Точка входа
-│ ├── .env.example # Пример переменных окружения
-│ ├── docker-compose.yaml # Docker конфигурация
-│ ├── Dockerfile # Docker образ
-│ └── package.json
-├── frontend/ # React фронтенд
-│ ├── src/
-│ │ ├── components/ # React компоненты
-│ │ ├── pages/ # Страницы приложения
-│ │ ├── store/ # Redux store
-│ │ ├── api/ # API клиенты
-│ │ ├── hooks/ # Кастомные хуки
-│ │ ├── types/ # TypeScript типы
-│ │ ├── App.tsx # Главный компонент
-│ │ └── index.tsx # Точка входа
-│ ├── .env.example # Пример переменных окружения
-│ ├── Dockerfile # Docker образ
-│ └── package.json
-├── docker-compose.full.yaml # Полная Docker конфигурация
-└── README.md # 
+├── backend/
+│   ├── scripts/
+│   │   ├── setup-database-windows.bat
+│   │   ├── setup-database.sh
+│   │   ├── setup-database.sql
+│   ├── src/
+│   │   ├── config/             
+│   │   │   ├── data-source.ts
+│   │   ├── migratons/             
+│   │   │   ├── 1705610000000-CreateSupportTables.ts
+│   │   ├── modules/             
+│   │   │   ├── auth/
+│   │   │   │   ├── dto/
+│   │   │   │   ├── guards/
+│   │   │   │   │   ├── ws-jwt.guard.ts
+│   │   │   │   ├── strtegies/
+│   │   │   ├── auth.module.ts
+│   │   │   ├── books/
+│   │   │   │   ├── dto/
+│   │   │   │   ├── entities/
+│   │   │   │   │   ├── book.entity.ts
+│   │   │   │   ├── books.controller.ts
+│   │   │   │   ├── books.module.ts
+│   │   │   │   ├── books.service.ts
+│   │   │   ├── liraries/
+│   │   │   │   ├── dto/
+│   │   │   │   ├── entities/
+│   │   │   │   │   ├── book.entity.ts
+│   │   │   │   ├── libraries.module.ts
+│   │   │   ├── support/
+│   │   │   │   ├── controllers/
+│   │   │   │   │   ├── support-client.controller.ts
+│   │   │   │   │   ├── support-common.controller.ts
+│   │   │   │   │   ├── support-manager.controller.ts
+│   │   │   │   │   ├── dto/
+│   │   │   │   │   │   ├── support-create-support-request.dto.ts
+│   │   │   │   │   │   ├── send-message.dto.ts
+│   │   │   │   │   ├── entities/
+│   │   │   │   │   │   ├── message.entity.ts
+│   │   │   │   │   │   ├── support-request.entity.ts
+│   │   │   │   │   ├── interfaces/
+│   │   │   │   │   │   ├── support-request.interface.ts
+│   │   │   │   │   ├── services/
+│   │   │   │   │   │   ├── support-request.service.ts
+│   │   │   │   │   ├── support.gateway.ts
+│   │   │   │   │   ├── support.module.ts
+│   │   │   │   │   ├── users/
+│   │   │   │   │   │   ├── entities/
+│   │   │   │   │   │   ├── users.module.ts
+│   │   │   │   ├── seeds/       
+│   │   │   │   │   ├── run-seeds.ts     
+│   │   │   │   ├── app.module.ts
+│   │   │   │   ├── books.controller.ts
+│   │   │   │   ├── main.ts         
+│   │   │   ├── temp-nest\node_modules   
+│   │   ├── .eslintrc.js
+│   │   ├── .prettierrc
+│   │   ├── Dockerfile
+│   │   ├── nest-cli.json
+│   │   ├── ormconfig.json
+│   │   ├── package-lock.json
+│   │   ├── package.json
+│   │   ├── package.json.backup
+│   │   ├── README.md
+│   │   ├── tsconfig.build.json
+│   │   ├── tsconfig.json        
+│   ├── dist           
+│   ├── frontend/
+│   │   ├── _mocks_/              
+│   │   │   ├── fileMock.js
+│   │   ├── coverage/
+│   │   │   ├── Icov-report/
+│   │   │   │   ├── src/
+│   │   │   │   │   ├── api/
+│   │   │   │   │   │   ├── auth.api.ts.html
+│   │   │   │   │   │   ├── client.ts.html
+│   │   │   │   │   │   ├── index.html
+│   │   │   │   │   ├── components/
+│   │   │   │   │   │   ├── Admin
+│   │   │   │   │   │   │   ├── index.html
+│   │   │   │   │   │   │   ├── UsersManagement.tsx.html
+│   │   │   │   │   │   ├── BookSearch.tsx.html
+│   │   │   │   │   │   ├── index.html
+│   │   │   │   │   │   ├── Navigation.tsx.html
+│   │   │   │   │   ├── pages/
+│   │   │   │   │   │   ├── AdminDashboard.tsx.html
+│   │   │   │   │   │   ├── BookDetailPage.tsx.html
+│   │   │   │   │   │   ├── BooksPage.tsx.html
+│   │   │   │   │   │   ├── Dashboard.tsx.html
+│   │   │   │   │   │   ├── index.html
+│   │   │   │   │   │   ├── LibrariesPage.tsx.html
+│   │   │   │   │   │   ├── LibraryBooksPage.tsx.html
+│   │   │   │   │   │   ├── LibraryDetailPage.tsx.html
+│   │   │   │   │   │   ├── LoginPage.tsx.html
+│   │   │   │   │   │   ├── SupportPage.tsx.tsx.html
+│   │   │   │   │   ├── services/
+│   │   │   │   │   │   ├── Api.ts.html
+│   │   │   │   │   │   ├── index.html
+│   │   │   │   │   ├── store/
+│   │   │   │   │   │   ├── slices/
+│   │   │   │   │   │   │   ├── authSlice.ts.html
+│   │   │   │   │   │   │   ├── booksSlice.ts
+│   │   │   │   │   │   │   ├── index.html
+│   │   │   │   │   │   │   ├── librariesSlice.ts
+│   │   │   │   │   │   │   ├── support.slice.ts
+│   │   │   │   │   │   │   ├── users.slice.ts.html
+│   │   │   │   │   │   ├── index.html
+│   │   │   │   │   │   ├── index.ts.html
+│   │   │   │   │   │   ├── store.ts.html
+│   │   │   │   │   ├── App.tsx.html
+│   │   │   │   │   ├── Auth.tsx.html
+│   │   │   │   │   ├── index.html
+│   │   │   │   ├── base.css
+│   │   │   │   ├── block-navigation.js
+│   │   │   │   ├── favicon.png
+│   │   │   │   ├── index.html
+│   │   │   │   ├── prettify.js
+│   │   │   │   ├── sort-arrow-sprite.png
+│   │   │   │   ├── sorter.js
+│   │   │   ├── src/
+│   │   │   │   ├── api/
+│   │   │   │   │   ├── auth.api.ts.html
+│   │   │   │   │   ├── client.ts.html
+│   │   │   │   │   ├── index.html
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── Admin
+│   │   │   │   │   │   ├── index.html
+│   │   │   │   │   │   ├── UsersManagement.tsx.html
+│   │   │   │   │   ├── BookSearch.tsx.html
+│   │   │   │   │   ├── index.html
+│   │   │   │   │   ├── Navigation.tsx.html
+│   │   │   │   ├── pages/
+│   │   │   │   │   ├── AdminDashboard.tsx.html
+│   │   │   │   │   ├── BookDetailPage.tsx.html
+│   │   │   │   │   ├── BooksPage.tsx.html
+│   │   │   │   │   ├── Dashboard.tsx.html
+│   │   │   │   │   ├── index.html
+│   │   │   │   │   ├── LibrariesPage.tsx.html
+│   │   │   │   │   ├── LibraryBooksPage.tsx.html
+│   │   │   │   │   ├── LibraryDetailPage.tsx.html
+│   │   │   │   │   ├── LoginPage.tsx.html
+│   │   │   │   │   ├── SupportPage.tsx.html
+│   │   │   │   ├── services/
+│   │   │   │   │   ├── Api.ts.html
+│   │   │   │   │   ├── index.html
+│   │   │   │   ├── store/
+│   │   │   │   │   ├── slices/
+│   │   │   │   │   │   ├── authSlice.ts.html
+│   │   │   │   │   │   ├── booksSlice.ts
+│   │   │   │   │   │   ├── index.html
+│   │   │   │   │   │   ├── librariesSlice.ts
+│   │   │   │   │   │   ├── support.slice.ts
+│   │   │   │   │   │   ├── users.slice.ts.html
+│   │   │   │   │   ├── index.html
+│   │   │   │   │   ├── index.ts.html
+│   │   │   │   │   ├── store.ts.html
+│   │   │   │   ├── App.tsx.html
+│   │   │   │   ├── Auth.tsx.html
+│   │   │   │   ├── index.html
+│   │   │   ├── base.css
+│   │   │   ├── block-navigation.js
+│   │   │   ├── favicon.png
+│   │   │   ├── index.html
+│   │   │   ├── prettify.js
+│   │   │   ├── sort-arrow-sprite.png
+│   │   │   ├── sorter.js
+│   │   ├── public/
+│   │   │   ├── index.html
+│   │   │   ├── index.html.backup
+│   │   ├── src/
+│   │   │   ├── __tests__/
+│   │   │   │   ├── demo/
+│   │   │   │   │   ├── authSlice.test.ts
+│   │   │   │   │   ├── booksSlice.test.ts
+│   │   │   │   │   ├── Component.test.tsx
+│   │   │   │   │   ├── store.test.ts
+│   │   │   │   │   ├── types.test.ts
+│   │   │   ├── api
+│   │   │   │   ├── auth.api.ts
+│   │   │   │   ├── client.ts
+│   │   │   ├── components
+│   │   │   │   ├── Admin/
+│   │   │   │   │   ├── UsersManagement.tsx
+│   │   │   │   ├── Auth.jsx
+│   │   │   │   ├── BookSearch.tsx
+│   │   │   │   ├── Navigation.tsx
+│   │   │   ├── pages/
+│   │   │   │   ├── AdminDashboard.tsx
+│   │   │   │   ├── BookDetailPage.tsx
+│   │   │   │   ├── BooksPage.tsx
+│   │   │   │   ├── Dashboard.tsx
+│   │   │   │   ├── LibrariesPage.tsx
+│   │   │   │   ├── LibraryBooksPage.tsx
+│   │   │   │   ├── LibraryDetailPage.tsx
+│   │   │   │   ├── LoginPage.tsx
+│   │   │   │   ├── SupportPage.tsx
+│   │   │   ├── services/
+│   │   │   │   ├── api.ts
+│   │   │   ├── store/
+│   │   │   │   ├── slices/
+│   │   │   │   │   ├── __tests__/
+│   │   │   │   │   │   ├── authSlice.test.ts
+│   │   │   │   │   │   ├── booksSlice.test.ts
+│   │   │   │   │   ├── authSlice.ts
+│   │   │   │   │   ├── booksSlice.ts
+│   │   │   │   │   ├── authSlice.ts.backup
+│   │   │   │   │   ├── librariesSlice.ts
+│   │   │   │   │   ├── support.slice.ts
+│   │   │   │   │   ├── users.slice.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── store.ts
+│   │   │   ├── types/
+│   │   │   │   ├── auth.types.ts
+│   │   │   │   ├── user.ts
+│   │   │   ├── App.css
+│   │   │   ├── App.tsx
+│   │   │   ├── App.tsx.backup
+│   │   │   ├── App.tsx.backup2
+│   │   │   ├── Auth.tsx
+│   │   │   ├── index.css
+│   │   │   ├── index.tsx
+│   │   │   ├── index.tsx.backup
+│   │   │   ├── setupTests.ts
+│   │   ├── .env
+│   │   ├── .env.example
+│   │   ├── .env.local
+│   │   ├── App.tsx
+│   │   ├── App.tsx.backup
+│   │   ├── Auth.tsx
+│   │   ├── Dockerfile
+│   │   ├── index.tsx
+│   │   ├── jest.config.json
+│   │   ├── nginx.conf
+│   │   ├── package-lock.json
+│   │   ├── package.json
+│   │   ├── package.json.backup
+│   │   ├── setupProxy.js
+│   │   ├── tsconfig.json
+│   │   ├── node_modules
+│   ├── .gitignor
+│   ├── all_books.json
+│   ├── books_correct.json
+│   ├── books_utf8.json
+│   ├── build-and-run.sh
+│   ├── check-api.js
+│   ├── check-api.sh
+│   ├── check-db.sql
+│   ├── create_users_table.sql
+│   ├── create-indexes.sql
+│   ├── create-tables.sql
+│   ├── direct-seed.sh
+│   ├── docker-compose.dev.yaml
+│   ├── docker-compose.yml
+│   ├── final_books.json
+│   ├── final-report.md
+│   ├── final-validation.sh
+│   ├── fix_data.sql
+│   ├── fix-errors.sh
+│   ├── FYREADME.md
+│   ├── init-database.sh
+│   ├── init-database.sql
+│   ├── insert_data.sql
+│   ├── libraries.json
+│   ├── library_auth.html
+│   ├── library-api.sh
+│   ├── library-demo.js
+│   ├── monitor.js
+│   ├── nest-cli.json
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── PROJECT_PROGRESS.md
+│   ├── README_PROGRESS_LAST.md
+│   ├── README.md
+│   ├── rebuild-all.sh
+│   ├── recreate_data_utf8.sql
+│   ├── recreate_data.sql
+│   ├── seed_database.sql
+│   ├── seed-data.sh
+│   ├── seed-data.sql
+│   ├── seed-database.sql
+│   ├── setup-postgres.sql
+│   ├── simple_library_auth.html
+│   ├── simple-test.js
+│   ├── test_backend.sh
+│   ├── test-all-endpoints.sh
+│   ├── test-api-utf8.sh
+│   ├── tsconfig.json
+
 
 
 ## 🚀 Быстрый старт
